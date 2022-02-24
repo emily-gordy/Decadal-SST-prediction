@@ -105,7 +105,7 @@ var_dataset = xr.Dataset(
 
 #%% save to netCDF
 
-varstrout = "/Users/emgordy/Documents/Experiments/DecadalPrediction_ForReal/data/"+varstr+"-deseasoned_detrended_"+str(spinup)+"-24000_"+grid+".nc" 
+varstrout = varstr+"-deseasoned_detrended_"+str(spinup)+"-24000_"+grid+".nc" 
 
 if writeout:
     var_dataset.to_netcdf(varstrout)
