@@ -23,4 +23,5 @@ My pre-processing is laborious and chippy choppy so I see the data at every step
 1. deseason-detrend.py to deseason and detrend raw data (works for all OHC levels and SST)
 2. OHCrunningmean.py apply lookback running mean to OHC
 3. SSTrunningmean.py apply lookforward running mean to SST
-4. 
+4. nninput_output.py save the OHC and SST into the format for input/output into ANN
+5. SSTpersistence.py make an extra SST netCDF4 as the persistence model
