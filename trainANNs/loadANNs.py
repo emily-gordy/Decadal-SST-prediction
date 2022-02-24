@@ -223,40 +223,29 @@ nseeds = seeds.shape[0]
 latsel = np.asarray(latsel)
 lonsel = np.asarray(lonsel)
 
-testloss = np.empty((nlat,nlon,nseeds))+np.nan
-testMAE = np.empty((nlat,nlon,nseeds))+np.nan
-testsign = np.empty((nlat,nlon,nseeds))+np.nan
-testspread = np.empty((nlat,nlon,nseeds))+np.nan
-testpercentiles = np.empty((nlat,nlon,nseeds,10))+np.nan
-test_muvar = np.empty((nlat,nlon,nseeds))+np.nan
-testpCC = np.empty((nlat,nlon,nseeds,10))+np.nan
-testsCC = np.empty((nlat,nlon,nseeds,10))+np.nan
-testpvalp = np.empty((nlat,nlon,nseeds,10))+np.nan
-testpvals = np.empty((nlat,nlon,nseeds,10))+np.nan
-testaccuracy = np.empty((nlat,nlon,nseeds,10))+np.nan
-testMAEpercentiles_scaled = np.empty((nlat,nlon,nseeds,10))+np.nan
-
-# testtercilesacc = np.empty((nlat,nlon,nseeds,10))+np.nan
-
+# all the metrics! computed on the testing data! (nb can be change for validation data)
+testloss = np.empty((nlat,nlon,nseeds))+np.nan # loss
+testMAE = np.empty((nlat,nlon,nseeds))+np.nan # mean absolute error
+testsign = np.empty((nlat,nlon,nseeds))+np.nan # sign (guess too positive vs guess too negative)
+testspread = np.empty((nlat,nlon,nseeds))+np.nan # confidence (model too overconfident vs model too underconfident)
+testpercentiles = np.empty((nlat,nlon,nseeds,10))+np.nan # MAE as function of network confidence (1/uncertainty)
+test_muvar = np.empty((nlat,nlon,nseeds))+np.nan # variance in predicited mu values
+testpCC = np.empty((nlat,nlon,nseeds,10))+np.nan # Pearson correlation coefficient
+testsCC = np.empty((nlat,nlon,nseeds,10))+np.nan # Spearman rank coefficient
+testpvalp = np.empty((nlat,nlon,nseeds,10))+np.nan # pval for pearson correlation
+testpvals = np.empty((nlat,nlon,nseeds,10))+np.nan # pval for spearman correlation
+testaccuracy = np.empty((nlat,nlon,nseeds,10))+np.nan # accuracy of sign of prediction
 folderstr = 'SSTfromOHC_ASHA'
 
-#%%
+#%% load in the models
 
 output_nodes = 2
 for ilat,lat in enumerate(latsel):
     for ilon,lon in enumerate(lonsel):
-        # ilon = np.where(lon==lonsel)[0][0] # picking from original latxlon grid
-        # ilat = np.where(lat==latsel)[0][0]   
         if np.isnan(Y_train_full[0,ilat,ilon]):
-            # testloss[ilat,ilon,:] = np.nan
             print("lat="+str(lat)+ " lon=" +str(lon)+" over land")
-        else:
-            # Y_train = makeYdata(Y_train_full,ilat,ilon,output_nodes)
-            
-            Y_test = makeYdata(Y_test_full,ilat,ilon,output_nodes)
-        
+        else:        
             for iseed,seed in enumerate(seeds):
-                Y_val = makeYdata(Y_val_full,ilat,ilon,output_nodes)
                 Y_test = makeYdata(Y_test_full,ilat,ilon,output_nodes)
                 modelstrout = modelstrfunc(folderstr,lat,lon,ly1,ly2,hiddens,ridgepenL2,lr,seed,drate)
                 print(modelstrout)
@@ -265,32 +254,27 @@ for ilat,lat in enumerate(latsel):
                 tf.random.set_seed(seed)
                 random.seed(int(seed))         
                 
-                # load and train
+                # load model and add saved weights
                 model = loadmodel(hiddens,seed,ridgepenL2,lr,drate)
                 model.load_weights(modelstrout)
                 
-                y_pred = model.predict(X_val)
+                y_pred = model.predict(X_test) # predict the testing data
                 
-                testloss[ilat,ilon,iseed]=ANNmetrics.logp_GAUSS(y_pred,Y_val)
-                testMAE[ilat,ilon,iseed]=ANNmetrics.MAE(y_pred,Y_val)
-                testsign[ilat,ilon,iseed]=ANNmetrics.halfNhalf_GAUSS(y_pred,Y_val)
-                testspread[ilat,ilon,iseed]=ANNmetrics.predspread_GAUSS(y_pred,Y_val)
-                testpercentiles[ilat,ilon,iseed,:],_,_=ANNmetrics.MAEpercentiles_GAUSS(y_pred,Y_val)
+                testloss[ilat,ilon,iseed]=ANNmetrics.logp_GAUSS(y_pred,Y_test)
+                testMAE[ilat,ilon,iseed]=ANNmetrics.MAE(y_pred,Y_test)
+                testsign[ilat,ilon,iseed]=ANNmetrics.halfNhalf_GAUSS(y_pred,Y_test)
+                testspread[ilat,ilon,iseed]=ANNmetrics.predspread_GAUSS(y_pred,Y_test)
+                testpercentiles[ilat,ilon,iseed,:],_,_=ANNmetrics.MAEpercentiles_GAUSS(y_pred,Y_test)
                 test_muvar[ilat,ilon,iseed]=np.nanstd(y_pred[:,0])
+                testpCC[ilat,ilon,iseed,:],testpvalp[ilat,ilon,iseed,:]=ANNmetrics.Pearsonpercentile(y_pred,Y_test)
+                testsCC[ilat,ilon,iseed,:],testpvals[ilat,ilon,iseed,:]=ANNmetrics.Spearmanpercentile(y_pred,Y_test)
+                testaccuracy[ilat,ilon,iseed,:]=ANNmetrics.ClassificationAccuracy(y_pred,Y_test)
                 
-                testpCC[ilat,ilon,iseed,:],testpvalp[ilat,ilon,iseed,:]=ANNmetrics.Pearsonpercentile(y_pred,Y_val)
-                testsCC[ilat,ilon,iseed,:],testpvals[ilat,ilon,iseed,:]=ANNmetrics.Spearmanpercentile(y_pred,Y_val)
-                testaccuracy[ilat,ilon,iseed,:]=ANNmetrics.ClassificationAccuracy(y_pred,Y_val)
-                
-                # testMAEpercentiles_scaled[ilat,ilon,iseed,:] = ANNmetrics.MAEpercentile_scaledvar(y_pred, Y_val, y_valpred)
-                # testtercilesacc[ilat,ilon,iseed,:] = ANNmetrics.tercileaccuracy(y_pred, Y_test)
-                # testACC
-
 #%%
 
-metricstr = 'ExperimentMetricsAll_validation_ly'+str(ly1)+'-'+str(ly2)+'_hiddens'+str(hiddens[0])+str(hiddens[1])+'_lr'+str(lr)+'_drate'+str(drate)+'.nc'
+metricstr = 'ExperimentMetricsAll_ly'+str(ly1)+'-'+str(ly2)+'_hiddens'+str(hiddens[0])+str(hiddens[1])+'_lr'+str(lr)+'_drate'+str(drate)+'.nc'
 percentiles = np.flipud(np.arange(10,110,10))
-# percentiles2 = np.flipud(np.arange(10,110,10))
+
 #%%
 ds = xr.Dataset(
     {"testloss":(("lat","lon","seed"), testloss),
@@ -304,7 +288,6 @@ ds = xr.Dataset(
     "testsCC":(("lat","lon","seed","percentile"), testsCC),
     "testpvals":(("lat","lon","seed","percentile"), testpvals),    
     "testaccuracy":(("lat","lon","seed","percentile"), testaccuracy),
-    "testMAEscaled":(("lat","lon","seed","percentile"), testMAEpercentiles_scaled),
     },
     coords={
         "lat": latsel,
@@ -314,55 +297,4 @@ ds = xr.Dataset(
         },
     )
 ds.to_netcdf(metricstr)
-
-
-# ds = xr.Dataset(
-#     {"testACC":(("lat","lon","seed"), testACC),
-#     "testpval":(("lat","lon","seed"), testpval)},
-#     coords={
-#         "lat": latsel,
-#         "lon": lonsel,
-#         "seed": seeds,
-#         },
-#     )
-# ds.to_netcdf(metricstr)
-
-# metricstrterciles = 'ExperimentMetricsTerciles_ly'+str(ly1)+'-'+str(ly2)+'_hiddens'+str(hiddens[0])+str(hiddens[1])+'_lr'+str(lr)+'_drate'+str(drate)+'.nc'
-
-# ds = xr.Dataset(
-#     {"testtercileacc":(("lat","lon","seed","percentile"), testtercilesacc),
-#     },
-#     coords={
-#         "lat": latsel,
-#         "lon": lonsel,
-#         "seed": seeds,
-#         "percentile": percentiles
-#         },
-#     )
-# ds.to_netcdf(metricstrterciles)
-
-#%%
-
-# bestACC = np.max(np.abs(testaccuracy[:,:,:,0]),axis=2)
-# bestACC[bestACC<0.4] = np.nan
-# import matplotlib.pyplot as plt
-# import cmasher as cmr
-# plt.contourf(bestACC,levels=np.arange(0.5,1.05,0.05),cmap=cmr.flamingo)
-# plt.colorbar()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
