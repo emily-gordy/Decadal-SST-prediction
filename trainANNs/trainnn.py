@@ -108,7 +108,7 @@ def RegressLossExpSigma(y_true, y_pred):
 # split SST to train,val,testing data, then standardize by the training data
 def makedata_heatx3_SSTonly(ly1=1,ly2=5):
 
-    sststr = glob.glob("/Users/emgordy/Documents/Experiments/DecadalPrediction_ForReal/data/sst-output_detrended*spinup*%d-%d*heatx3.nc" %(ly1,ly2))[0]
+    sststr = glob.glob("sst-output_detrended*spinup*%d-%d*heatx3.nc" %(ly1,ly2))[0]
 
     sstoutputset = xr.open_dataset(sststr)
 
@@ -152,7 +152,7 @@ def makedata_heatx3_SSTonly(ly1=1,ly2=5):
 # split OHC into train,val,test, standardize by the training set
 def makedata_heatx3_OHConly(ly1=1,ly2=5,runin=60):
     
-    ohcstr = glob.glob("/Users/emgordy/Documents/Experiments/DecadalPrediction_ForReal/data/ohc-i*heatx3*detrended*spinup*%d*%d-%d*.nc" %(runin,ly1,ly2))[0]
+    ohcstr = glob.glob("ohc-i*heatx3*detrended*spinup*%d*%d-%d*.nc" %(runin,ly1,ly2))[0]
     
     ohcinputset = xr.open_dataset(ohcstr)
     
