@@ -11,7 +11,7 @@ import numpy as np
 from scipy.stats import norm, pearsonr, spearmanr
 import tensorflow_probability as tfp
 
-def logp_GAUSS(y_pred,Y_test):
+def logp_GAUSS(y_pred,Y_test): # -log likelihood of y_true given conditional distribution predicted by ANN
 
     mu = y_pred[:,0]
     std = np.exp(y_pred[:,1])
@@ -19,7 +19,7 @@ def logp_GAUSS(y_pred,Y_test):
     
     return logp
 
-def MAE(y_pred,Y_test):
+def MAE(y_pred,Y_test): # mean absolute error, |truth-mu|
     
     mu = y_pred[:,0] 
     y_true = Y_test[:,0]
@@ -29,7 +29,7 @@ def MAE(y_pred,Y_test):
     
     return MAE
 
-def halfNhalf_GAUSS(y_pred,Y_test):
+def halfNhalf_GAUSS(y_pred,Y_test): # guesses too high vs guesses too low, should be approximately 50/50
     
     mu = y_pred[:,0] 
     y_true = Y_test[:,0]
@@ -43,7 +43,7 @@ def halfNhalf_GAUSS(y_pred,Y_test):
     return prophi
 
 
-def predspread_GAUSS(y_pred,Y_test):
+def predspread_GAUSS(y_pred,Y_test): # guesses within 1 sigma vs guesses outside 1 sigma, should be 68/32
     
     mu = y_pred[:,0]
     std = np.exp(y_pred[:,1])
@@ -60,7 +60,7 @@ def predspread_GAUSS(y_pred,Y_test):
     
     return prophits
 
-def MAEpercentiles_GAUSS(y_pred,Y_test):
+def MAEpercentiles_GAUSS(y_pred,Y_test): # MAE as function of network confidence, each step thresholds higher confidence (lower sigma)
     mu = y_pred[:,0]
     sigma = np.exp(y_pred[:,1])
     Y_true = Y_test[:,0]
@@ -84,7 +84,7 @@ def MAEpercentiles_GAUSS(y_pred,Y_test):
     
     return MAEbinned, percentiles, sigmacutoff
 
-def ClassificationAccuracy(y_pred,Y_test): 
+def ClassificationAccuracy(y_pred,Y_test): # classification accuracy: how often is the sign correct
     
     mu = y_pred[:,0]
     sigma = np.exp(y_pred[:,1])
@@ -113,7 +113,7 @@ def ClassificationAccuracy(y_pred,Y_test):
     
     return accout
             
-def Pearsonpercentile(y_pred,Y_test):
+def Pearsonpercentile(y_pred,Y_test): # pearson correlation coefficient as a function of network confidence
     mu = y_pred[:,0]
     sigma = np.exp(y_pred[:,1])
     Y_true = Y_test[:,0]
@@ -134,7 +134,7 @@ def Pearsonpercentile(y_pred,Y_test):
     return pearsonbinned,pval 
 
 
-def Spearmanpercentile(y_pred,Y_test):
+def Spearmanpercentile(y_pred,Y_test): # spearman rank coefficient as a function of network confidence
     mu = y_pred[:,0]
     sigma = np.exp(y_pred[:,1])
     Y_true = Y_test[:,0]
