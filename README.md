@@ -29,3 +29,5 @@ My pre-processing is laborious and chippy choppy so I see the data at every step
 ### TrainANNs
 Two scripts: training the ANNs then loading back to extract some metrics
 1. trainnn.py train 10 ANNs at each grid point in the ocean
+2. loadANN.py load in each ANN and compute metrics for each model to be saved in netcdf
+3. ANNmetrics.py function file called by loadANN.py to compute each metric
