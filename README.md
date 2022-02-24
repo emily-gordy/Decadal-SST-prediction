@@ -25,3 +25,7 @@ My pre-processing is laborious and chippy choppy so I see the data at every step
 3. SSTrunningmean.py apply lookforward running mean to SST
 4. nninput_output.py save the OHC and SST into the format for input/output into ANN
 5. SSTpersistence.py make an extra SST netCDF4 as the persistence model
+
+### TrainANNs
+Two scripts: training the ANNs then loading back to extract some metrics
+1. trainnn.py train 10 ANNs at each grid point in the ocean
