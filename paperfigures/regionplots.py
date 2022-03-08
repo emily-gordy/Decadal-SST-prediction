@@ -160,6 +160,11 @@ regionstr = 'Subpolar Gyre, North Atlantic'
 lat1 = 52.5
 lon1 = 325
 
+# North Pacific
+# regionstr = 'North Pacific'
+# lat1 = 42.5
+# lon1 = 175
+
 # first grab best seed from each region
 
 with open('bestind_val_ly'+str(ly1)+'-'+str(ly2)+'_array.pkl', 'rb') as f:
