@@ -32,7 +32,7 @@ Two scripts: training the ANNs then loading back to extract some metrics
 2. loadANN.py load in each ANN and compute metrics for each model to be saved in netcdf
 3. ANNmetrics.py function file called by loadANN.py to compute each metric
 
-### Plots
+### Plotting
 Scripts for generating the panels in the Figures in the paper
 1. savebestseed.py pickles an array with the best network seed on the validation data at each grid point
 2. globalmaps.py make the panels in Figure 2, i.e. plot MAE and MAE vs persistence
