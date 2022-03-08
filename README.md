@@ -26,8 +26,15 @@ My pre-processing is laborious and chippy choppy so that I can check and double 
 4. nninput_output.py save the OHC and SST into the format for input/output into ANN
 5. SSTpersistence.py make an extra SST netCDF4 as the persistence model
 
-### TrainANNs
+### Train ANNs
 Two scripts: training the ANNs then loading back to extract some metrics
 1. trainnn.py train 10 ANNs at each grid point in the ocean
 2. loadANN.py load in each ANN and compute metrics for each model to be saved in netcdf
 3. ANNmetrics.py function file called by loadANN.py to compute each metric
+
+### Plots
+Scripts for generating the panels in the Figures in the paper
+1. savebestseed.py pickles an array with the best network seed on the validation data at each grid point
+2. globalmaps.py make the panels in Figure 2, i.e. plot MAE and MAE vs persistence
+3. regionplots.py make the panels in Figures 3 and 4 by loading in individual networks
+4. nndata.py function file for pulling in SST/OHC data in a usable format
