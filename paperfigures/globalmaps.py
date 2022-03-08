@@ -9,7 +9,7 @@ Created on Tue Feb 15 12:32:20 2022
 # make nice figure of 
 
 # top row MAE all predictions
-# middle row MAE on 20\% most confident predictions
+# middle row MAE on 20% most confident predictions
 # bottom row MAE difference from persistence
 
 import xarray as xr
