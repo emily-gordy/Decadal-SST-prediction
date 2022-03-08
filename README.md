@@ -6,7 +6,7 @@ This is the github repo for _Incorporating uncertainty into neural networks enab
 * Training and saving ANNs
 * Creating figures in Gordon and Barnes 2022
 
-## Dependencies
+## Packages
 The code in this repo require python 3.9 with the usual packages (numpy, scipy, xarray) plus the following packages
 * [Tensorflow 2](https://www.tensorflow.org/install)
 * [Tensorflow probability](https://www.tensorflow.org/probability/install)
