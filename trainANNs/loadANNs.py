@@ -235,6 +235,8 @@ testsCC = np.empty((nlat,nlon,nseeds,10))+np.nan # Spearman rank coefficient
 testpvalp = np.empty((nlat,nlon,nseeds,10))+np.nan # pval for pearson correlation
 testpvals = np.empty((nlat,nlon,nseeds,10))+np.nan # pval for spearman correlation
 testaccuracy = np.empty((nlat,nlon,nseeds,10))+np.nan # accuracy of sign of prediction
+test_MAEsig = np.empty((nlat,nlon,nseeds))+np.nan
+test_pwilcox = np.empty((nlat,nlon,nseeds))+np.nan
 folderstr = 'SSTfromOHC_ASHA'
 
 #%% load in the models
@@ -259,6 +261,27 @@ for ilat,lat in enumerate(latsel):
                 model.load_weights(modelstrout)
                 
                 y_pred = model.predict(X_test) # predict the testing data
+                
+                            # wilcoxon rank test between NN and persistence
+                AE_diff = np.abs(y_mu-y_true)-np.abs(SSTpersist_test-y_true)
+                _,test_pwilcox[ilat,ilon,iseed] = wilcoxon(AE_diff,alternative='less')
+            
+                NN_AE = np.abs(y_mu-y_true)
+                MAE = np.mean(NN_AE)
+            
+                sigma20 = np.percentile(y_sigma,20)
+                sigmaboo = y_sigma<sigma20
+                AE20 = np.abs(y_mu[sigmaboo]-y_true[sigmaboo])
+                MAE20 = np.mean(AE20)
+            
+                N20 = AE20.shape[0]
+                boots = np.empty(N_boots)
+                for ii in range(N_boots):
+                    boots[ii] = np.mean(np.random.choice(NN_AE,size=N20))
+            
+                p5 = np.percentile(boots,5)
+            
+                test_MAEsig[ilat,ilon,iseed] = MAE20<p5
                 
                 testloss[ilat,ilon,iseed]=ANNmetrics.logp_GAUSS(y_pred,Y_test)
                 testMAE[ilat,ilon,iseed]=ANNmetrics.MAE(y_pred,Y_test)
@@ -288,6 +311,8 @@ ds = xr.Dataset(
     "testsCC":(("lat","lon","seed","percentile"), testsCC),
     "testpvals":(("lat","lon","seed","percentile"), testpvals),    
     "testaccuracy":(("lat","lon","seed","percentile"), testaccuracy),
+    "test_pwilcox":(("lat","lon","seed"), test_pwilcox),
+    "test_MAEsig":(("lat","lon","seed"), test_MAEsig),
     },
     coords={
         "lat": latsel,
