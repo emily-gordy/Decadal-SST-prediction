@@ -58,6 +58,9 @@ arrdims = np.shape(testloss)
 bestMAEall = np.empty((arrdims[0],arrdims[1],2))+np.nan
 bestMAE20 = np.empty((arrdims[0],arrdims[1],2))+np.nan
 
+MAE20_sig = np.empty((arrdims[0],arrdims[1],2))+np.nan
+MAEdiff_sig = np.empty((arrdims[0],arrdims[1],2))+np.nan
+
 persistenceMAE = np.empty((arrdims[0],arrdims[1],2))+np.nan
 
 # loop through the two lead year ranges
@@ -77,6 +80,9 @@ for ily in range(2):
     sCC = np.asarray(metricsds.testsCC)
     pvals = np.asarray(metricsds.testpvals)
     classacc = np.asarray(metricsds.testaccuracy)
+
+    MAE20_sigloop = np.asarray(metricds.test_MAEsig)
+    MAEdiff_sigloop = np.asarray(metricds.test_pwilcox)
     
     MAE = np.asarray(metricsds.testMAE)
     
@@ -113,12 +119,30 @@ for ily in range(2):
             if ~np.isnan(bestind[ilat,ilon]):
                 bestMAEall[ilat,ilon,ily] = testpercentiles[ilat,ilon,int(bestind[ilat,ilon]),0]
                 bestMAE20[ilat,ilon,ily] = testpercentiles[ilat,ilon,int(bestind[ilat,ilon]),8]
-                
+                MAE20_sig[ilat,ilon,ily] = MAE20_sigloop[ilat,ilon,int(bestind[ilat,ilon])]
+                MAEdiff_sig[ilat,ilon,ily] = MAEdiff_sigloop[ilat,ilon,int(bestind[ilat,ilon])]
+          
     # persistence model
     per_train, per_val, per_test, latsel, lonsel = nndata.sstpersistence_ALL(ly1,ly2)
     persistenceMAE[:,:,ily] = np.nanmean(np.abs(per_test-Y_test),axis=0)
 
 errdiff = bestMAEall-persistenceMAE    
+
+MAEdiff_sig[MAEdiff_sig<0.001]= 0
+MAEdiff_sig[MAEdiff_sig>0.001]= 1
+
+longrid,latgrid = np.meshgrid(lon,lat)
+
+lon15 = longrid[MAE20_sig[:,:,0]!=1]
+lat15 = latgrid[MAE20_sig[:,:,0]!=1]
+
+lon37 = longrid[MAE20_sig[:,:,1]!=1]
+lat37 = latgrid[MAE20_sig[:,:,1]!=1]
+
+lat15 = lat15+2.5
+lon15 = lon15+2.5
+lon37 = lon37+2.5
+lat37 = lat37+2.5
 
 #%% plotting
 
@@ -128,66 +152,86 @@ errdiff[np.isnan(errdiff)] = 0
 
 bounds1 = np.arange(0.2,1.05,0.05)
 bounds2 = np.arange(-0.7,0.8,0.1)
+bounds3 = np.arange(-0.4,0.45,0.05)
 
 cmapMAE = cmr.torch_r
 cmapdiffMAE = cmr.redshift_r
 
 norm1 = colors.BoundaryNorm(boundaries=bounds1, ncolors=cmapMAE.N)
 norm2 = colors.BoundaryNorm(boundaries=bounds2, ncolors=cmapdiffMAE.N)
+norm3 = colors.BoundaryNorm(boundaries=bounds3, ncolors=cmapdiffMAE.N)
 
 projection=ccrs.EqualEarth(central_longitude=255)
 transform=ccrs.PlateCarree()
 
-plt.figure(figsize=(12,9))
+plt.figure(figsize=(11,9))
 
-a1=plt.subplot(3,2,1,projection=projection)
+a1=plt.subplot(4,2,1,projection=projection)
 c1=a1.pcolormesh(lon,lat,bestMAEall[:,:,0],vmin=bounds1[0],vmax=bounds1[-1],cmap=cmapMAE,norm=norm1,transform=transform)
 a1.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '110m', facecolor='gray'))
 plt.title('lead year 1-5')
 plt.text(-0.07,0.25,'all predictions',transform=a1.transAxes,rotation='vertical')
 plt.text(0.02,0.97,'a',transform=a1.transAxes)
 
-a2=plt.subplot(3,2,2,projection=projection)
+a2=plt.subplot(4,2,2,projection=projection)
 a2.pcolormesh(lon,lat,bestMAEall[:,:,1],vmin=bounds1[0],vmax=bounds1[-1],cmap=cmapMAE,norm=norm1,transform=transform)
 a2.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '110m', facecolor='gray'))
 plt.title('lead year 3-7')
 plt.text(0.02,0.97,'b',transform=a2.transAxes)
 
-a3=plt.subplot(3,2,3,projection=projection)
+a3=plt.subplot(4,2,3,projection=projection)
 c3=a3.pcolormesh(lon,lat,bestMAE20[:,:,0],vmin=bounds1[0],vmax=bounds1[-1],cmap=cmapMAE,norm=norm1,transform=transform)
 a3.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '110m', facecolor='gray'))
 plt.text(-0.07,0.15,'20% most confident',transform=a3.transAxes,rotation='vertical')
 plt.text(0.02,0.97,'c',transform=a3.transAxes)
 
-a4=plt.subplot(3,2,4,projection=projection)
+a4=plt.subplot(4,2,4,projection=projection)
 a4.pcolormesh(lon,lat,bestMAE20[:,:,1],vmin=bounds1[0],vmax=bounds1[-1],cmap=cmapMAE,norm=norm1,transform=transform)
 a4.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '110m', facecolor='gray'))
 plt.text(0.02,0.97,'d',transform=a4.transAxes)
 
-cax1 = plt.axes((0.91,0.46,0.015,0.35))
+cax1 = plt.axes((0.91,0.545,0.015,0.35))
 cbar1=plt.colorbar(c1,cax=cax1,ticks=np.arange(0.2,1.2,0.2))
 cbar1.ax.set_ylabel('MAE')
 
-a5=plt.subplot(3,2,5,projection=projection)
-c5=a5.pcolormesh(lon,lat,errdiff[:,:,0],vmin=bounds2[0],vmax=bounds2[-1],cmap=cmapdiffMAE,norm=norm2,transform=transform)
+a5=plt.subplot(4,2,5,projection=projection)
+c5=a5.pcolormesh(lon,lat,MAEdiff20all[:,:,0],cmap=cmapdiffMAE,norm=norm3,transform=transform)
 a5.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '110m', facecolor='gray'))
-plt.text(-0.07,0.2,'MAE difference',transform=a5.transAxes,rotation='vertical')
+a5.scatter(lon15,lat15,marker='.',color='gray',transform=transform,s=1.6)
 plt.text(0.02,0.97,'e',transform=a5.transAxes)
+plt.text(-0.10,0.2,'MAE difference',transform=a5.transAxes,rotation='vertical')
+plt.text(-0.05,0.15,'20% confident - All',transform=a5.transAxes,rotation='vertical')
 
-a6=plt.subplot(3,2,6,projection=projection)
-a6.pcolormesh(lon,lat,errdiff[:,:,1],vmin=bounds2[0],vmax=bounds2[-1],cmap=cmapdiffMAE,norm=norm2,transform=transform)
+a6=plt.subplot(4,2,6,projection=projection)
+a6.pcolormesh(lon,lat,MAEdiff20all[:,:,1],cmap=cmapdiffMAE,norm=norm3,transform=transform)
 a6.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '110m', facecolor='gray'))
+a6.scatter(lon37,lat37,marker='.',color='gray',transform=transform,s=1.6)
 plt.text(0.02,0.97,'f',transform=a6.transAxes)
 
-cax2 = plt.axes((0.91,0.14,0.015,0.2))
-cbar2 = plt.colorbar(c5,cax=cax2,ticks=np.arange(-0.6,0.9,0.3),extend='both')
+cax3 = plt.axes((0.91,0.265,0.015,0.2))
+cbar3 = plt.colorbar(c5,cax=cax3,ticks=np.arange(-0.4,0.6,0.2),extend='both')
+cbar3.ax.set_ylabel(r'$\Delta$MAE ')
+
+a7=plt.subplot(4,2,7,projection=projection)
+c7=a7.pcolormesh(lon,lat,errdiff[:,:,0],vmin=bounds2[0],vmax=bounds2[-1],cmap=cmapdiffMAE,norm=norm2,transform=transform)
+a7.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '110m', facecolor='gray'))
+plt.text(-0.10,0.2,'MAE difference',transform=a7.transAxes,rotation='vertical')
+plt.text(-0.05,0.18,'All - Persistence',transform=a7.transAxes,rotation='vertical')
+plt.text(0.02,0.97,'g',transform=a7.transAxes)
+
+a8=plt.subplot(4,2,8,projection=projection)
+a8.pcolormesh(lon,lat,errdiff[:,:,1],vmin=bounds2[0],vmax=bounds2[-1],cmap=cmapdiffMAE,norm=norm2,transform=transform)
+a8.add_feature(cfeature.NaturalEarthFeature('physical', 'land', '110m', facecolor='gray'))
+plt.text(0.02,0.97,'h',transform=a8.transAxes)
+
+cax2 = plt.axes((0.91,0.023,0.015,0.2))
+cbar2 = plt.colorbar(c7,cax=cax2,ticks=np.arange(-0.6,0.9,0.3),extend='both')
 cbar2.ax.set_ylabel(r'$\Delta$MAE ')
 
 plt.tight_layout()
 
-plt.savefig('figures/nicemaps.png',dpi=300)
+# plt.savefig('figures/nicemaps_fixed.png',dpi=300)
 
 plt.show()
-
 
 
