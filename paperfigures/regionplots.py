@@ -294,7 +294,8 @@ X_inputplot[ohclm] = X_inputloop
 plt.figure(figsize=(7,7))
 
 for iplot in range(3):
-    X_plot = np.reshape(X_inputplot[iplot*4050:(iplot+1)*4050],(45,90))
+    ichoose = -iplot+2 # OHC input goes OHC700, OHC300, OHC100 so flip that
+    X_plot = np.reshape(X_inputplot[ichoose*4050:(ichoose+1)*4050],(45,90))
     X_plot,_ = nndata.addcyclicpoint(X_plot, lonplot)
     a1 = plt.subplot(3,1,iplot+1,projection=projection)
     c1=a1.contourf(lonplot,latplot,X_plot,contours,cmap=cmap,transform=transform,extend='both')
@@ -335,6 +336,7 @@ plt.show()
 AMVbest20 = AMVindex[muboo & sigmaboo & trueboo]
 IPObest20 = IPOindex[muboo & sigmaboo & trueboo]
 
+
 Ntotal = AMVindex.shape[0]
 Nbest = AMVbest20.shape[0]
 
@@ -344,22 +346,30 @@ bestweights = np.zeros(Nbest)+(1/Nbest)
 binwidth = 0.4
 bins = np.arange(-3.6,3.6+binwidth,binwidth)
 
+xvec = bins[:-1]+0.5*binwidth
+
+AMVbest20hist,_ = np.histogram(AMVbest20,bins,weights=bestweights)
+IPObest20hist,_ = np.histogram(IPObest20,bins,weights=bestweights)
+
 plt.figure(figsize=(6,3))
 
 plt.subplot(1,2,1)
-plt.hist(AMVindex,bins,weights=totalweights,color='xkcd:maroon',label='all testing')
-plt.hist(AMVbest20,bins,weights=bestweights,color='xkcd:neon pink',alpha=0.6,label='20% most confident')
+plt.hist(AMVindex,bins,weights=totalweights,color='xkcd:neon pink',label='all testing')
+plt.hist(AMVbest20,bins,weights=bestweights,color='xkcd:maroon',label='20% most confident',histtype='step')
+# plt.plot(xvec,AMVbest20hist,color='xkcd:maroon',label='20% most confident')
 plt.legend(framealpha=0.2)
 plt.xticks(np.arange(-3,4))
 plt.yticks(np.arange(0,0.7,0.1))
+# plt.ylim((0,0.65))
 plt.xlim(-3.6,3.6)
 plt.ylabel('Frequency')
 plt.title('d. AMV index')
 plt.xlabel('index value')
 
 plt.subplot(1,2,2)
-plt.hist(IPOindex,bins,weights=totalweights,color='xkcd:dark green',label='all testing')
-plt.hist(IPObest20,bins,weights=bestweights,color='xkcd:neon green',alpha=0.6,label='20% most confident')
+plt.hist(IPOindex,bins,weights=totalweights,color='xkcd:neon green',label='all testing')
+plt.hist(IPObest20,bins,weights=bestweights,color='xkcd:dark green',label='20% most confident',histtype='step')
+# plt.plot(xvec,IPObest20hist,color='xkcd:dark green',label='20% most confident')
 plt.legend(framealpha=0.2)
 plt.xticks(np.arange(-3,4))
 plt.yticks(np.arange(0,0.3,0.05))
